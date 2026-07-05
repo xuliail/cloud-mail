@@ -1,25 +1,30 @@
-name: Deploy Cloudflare Workers
+name: Deploy mail to Cloudflare Workers
 on:
   workflow_dispatch:
 jobs:
-  deploy:
+  Build-and-Deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      - name: Checkout source code
         uses: actions/checkout@v4
-      # 强制锁定Node20，这一行是修复核心
-      - name: Setup Node.js 20
+
+      # 强制锁定Node20，杜绝自动升级Node24
+      - name: Set Node.js 20
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'pnpm'
-      - name: Setup pnpm
+
+      # pnpm必须锁定v3版本，v4和Node20不兼容，这是报错核心
+      - name: Install pnpm
         uses: pnpm/action-setup@v3
         with:
           version: 9
+
       - name: Install dependencies
-        run: pnpm install
-      - name: Deploy to Cloudflare Workers
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Deploy Worker
         run: pnpm run deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
